@@ -14,7 +14,7 @@ processJoinAccept calls aes_sessKeys
 ## Task 6
 lmic.c:1035	decodeFrame (void)
 
-@1088 calls aes_verifyMic(LMIC.nwkKey, LMIC.devaddr, seqno, /*dn*/1, d, pend)
+@1088 calls aes_verifyMic(LMIC.nwkKey, LMIC.devaddr, seqno, /\*dn\*/1, d, pend)
 	
 lmic.c:147	aes_verifyMic ( xref2cu1_t key, u4_t devaddr, u4_t seqno, int dndir, xref2cu1_t pdu, int len)
 	
@@ -25,7 +25,7 @@ decodeFrame calls aes_verifyMic
 ## Task 7
 lmic.c:1615 buildDataFrame (void)
 
-@1727 calls	aes_appendMic(LMIC.nwkKey, MIC.devaddr, LMIC.seqnoUp-1, /*up*/0, LMIC.frame, flen-4)
+@1727 calls	aes_appendMic(LMIC.nwkKey, MIC.devaddr, LMIC.seqnoUp-1, /\*up\*/0, LMIC.frame, flen-4)
 	
 lmic.c:154	aes_appendMic (xref2cu1_t key, u4_t devaddr, u4_t seqno, int dndir, xref2cu1_t pdu, int len)
 	
