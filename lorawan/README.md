@@ -43,3 +43,9 @@ lmic.c:162	aes_appendMic0 (xref2cu1_t pdu, int len)
 ```
 buildJoinRequest calls aes_appendMic0
 ```
+
+## Task 9
+Replay protection starts at lmic.c:1096.
+```
+if( seqno < LMIC.seqnoDn ) {
+```
