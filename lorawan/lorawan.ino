@@ -61,15 +61,46 @@ struct AppDataIn {
   uint8_t mode;
 };
 
+void err_blink ( const uint8_t err_id, const uint8_t err_code ) {
+  if ( err_code ) {
+    digitalWrite ( ERROR_LED, HIGH );
+    delay ( 2000 );
+    digitalWrite ( ERROR_LED, LOW );
+    delay ( 1000 );
+
+    for ( uint8_t blinkNo = 0; blinkNo < err_id; blinkNo++ ) {
+      digitalWrite ( ERROR_LED, HIGH );
+      delay ( 250 );
+      digitalWrite ( ERROR_LED, LOW );
+      delay ( 250 );
+    }
+
+    digitalWrite ( ERROR_LED, HIGH );
+    delay ( 2000 );
+    digitalWrite ( ERROR_LED, LOW );
+    delay ( 1000 );
+
+    for ( uint8_t blinkNo = 0; blinkNo < err_code; blinkNo++ ) {
+      digitalWrite ( ERROR_LED, HIGH );
+      delay ( 500 );
+      digitalWrite ( ERROR_LED, LOW );
+      delay ( 500 );
+    }
+  }
+}
+
 void setup() {
   /*********** TODO BEGIN ***********/
+  pinMode  ( ERROR_LED, OUTPUT );
+  digitalWrite ( ERROR_LED, LOW );
+
   // Set default mode of operation as 'LIGHT'
   nodeMode = LIGHT;
   // Turn on the radio module using the appropriate library function. You need to specify socket.
-  LoRaWAN.ON ( SOCKET );
+  LoRaWAN.ON ( socket );
   /*********** TODO END *************/
 
-  LoRaWAN.setADR("on");
+  LoRaWAN.setADR((char*)"on");
   uint32_t freq = 867100000;
   for (uint8_t ch = 3; ch <= 12; ch++) {
     LoRaWAN.setChannelFreq(ch, freq);
@@ -77,25 +108,30 @@ void setup() {
   }
 
   /*********** TODO BEGIN ***********/
+
 #ifdef ABP
   // Set device parameters for Back-End registration (for ABP)
-  LoRaWAN.setDeviceEUI ( DEVICE_EUI );
-  LoRaWAN.setDeviceAddr ( DEVICE_ADDR );
-  LoRaWAN.setNwkSessionKey ( NWK_SESSION_KEY );
-  LoRaWAN.setAppSessionKey ( APP_SESSION_KEY );
+  err_blink ( 1, LoRaWAN.setDeviceEUI ( DEVICE_EUI ) );
+  err_blink ( 2, LoRaWAN.getDeviceEUI() );
+  err_blink ( 3, LoRaWAN.setDeviceAddr ( DEVICE_ADDR ) );
+  err_blink ( 4, LoRaWAN.getDeviceAddr() );
+  err_blink ( 5, LoRaWAN.setNwkSessionKey ( NWK_SESSION_KEY ) );
+  err_blink ( 6, LoRaWAN.setAppSessionKey ( APP_SESSION_KEY ) );
   // Save device parameters to LoRaWAN module using the appropriate library function.
-  LoRaWAN.saveConfig();
+  err_blink ( 7, LoRaWAN.saveConfig() );
   // Perform ABP activation by calling the appropriate library function.
-  LoRaWAN.joinABP();
+  err_blink ( 8, LoRaWAN.joinABP() );
 #else //OTAA
   // Set device parameters for Back-End registration (for OTAA)
-  LoRaWAN.setDeviceEUI ( DEVICE_EUI );
-  LoRaWAN.setAppEUI ( APP_EUI );
-  LoRaWAN.setAppKey ( APP_KEY );
+  err_blink ( 1, LoRaWAN.setDeviceEUI ( DEVICE_EUI ) );
+  err_blink ( 2, LoRaWAN.getDeviceEUI() );
+  err_blink ( 3, LoRaWAN.getDeviceAddr() );
+  err_blink ( 4, LoRaWAN.setAppEUI ( APP_EUI ) );
+  err_blink ( 5, LoRaWAN.setAppKey ( APP_KEY ) );
   // Save device parameters to LoRaWAN module using the appropriate library function.
-  LoRaWAN.saveConfig();
+  err_blink ( 6, LoRaWAN.saveConfig() );
   // Perform OTA activation by calling the appropriate library function.
-  LoRaWAN.joinOTAA();
+  err_blink ( 7, LoRaWAN.joinOTAA() );
 #endif //ABP
   /*********** TODO END *************/
 }
@@ -166,7 +202,11 @@ void sendData(AppDataOut const& out) {
      '7' if input port parameter error
   */
   /*********** TODO BEGIN ***********/
-  uint8_t retVal = LoRaWAN.sendConfirmed ( PORT, data ); // Send application data within a confirmed uplink message, by calling the appropriate library function. You need to specify the port.
+  char char_data [ data.length() + 1 ];
+  data.toCharArray ( char_data, data.length() + 1 );
+  uint8_t retVal = LoRaWAN.sendConfirmed ( PORT, char_data ); // Send application data within a confirmed uplink message, by calling the appropriate library function. You need to specify the port.
+
+  err_blink ( 11, retVal );
   /*********** TODO END *************/
 }
 
@@ -183,6 +223,7 @@ bool receiveData(AppDataIn& in) {
 
        returned data is hex string (prepended with a nibble).
     */
+    err_blink ( 12, 0 );
     uint8_t appData = LoRaWAN._data[1] - '0';//skip the prepended nibble at _data[0] and read from _data[1]
     switch (appData) {
       case LIGHT:
@@ -205,66 +246,73 @@ void leftPad(uint8_t targetLen, char pad, String & s) {
 }
 
 /**
- * Converts 'val' to a hex string 'XX'.
- * 'val' will be represented with 2 HEX digits (1 byte) in total. 
- * Assumption: 0 <= val <= 100
- * Examples:
+   Converts 'val' to a hex string 'XX'.
+   'val' will be represented with 2 HEX digits (1 byte) in total.
+   Assumption: 0 <= val <= 100
+   Examples:
    0 <-> '00'
    1 <-> '01'
    98 <-> '62'
-   99 <-> '63' 
+   99 <-> '63'
    100 <-> '64'
-   
+
    (Note: This may not be the best way of doing it, but it is simple to code.)
 */
 void appendAsHex(uint8_t val, String & data) {
   String x = String(val, HEX);
   leftPad(2, '0', x);
-  data += x; 
+  data += x;
 }
 
 /*
- * Converts 'val' to a hex string 'SXXXYY' s.t. 
- *  - S indicates sign, and is 1 if 'val' is negative, 0 otherwise. 
- *  - XXX represents the part of 'val' before decimal point
- *  - YY represents the part of 'val' after decimal point
- * 'val' will be represented with 6 HEX digits (3 bytes) in total. 
- * Assumption: -1000.0 < val < 1000.0
- * Examples:
+   Converts 'val' to a hex string 'SXXXYY' s.t.
+    - S indicates sign, and is 1 if 'val' is negative, 0 otherwise.
+    - XXX represents the part of 'val' before decimal point
+    - YY represents the part of 'val' after decimal point
+   'val' will be represented with 6 HEX digits (3 bytes) in total.
+   Assumption: -1000.0 < val < 1000.0
+   Examples:
    -987.65 <-> '13DB41'
    +987.65 <-> '03DB41'
    Note that 987 is (3DB) in base 16, and 65 is (41) in base 16.
 
    (Note: This may not be the best way of doing it, but it is simple to code.)
- */
+*/
 void appendAsHex(float val, String & data) {
-  /*********** TODO BEGIN ***********/  
+  /*********** TODO BEGIN ***********/
   // Implement this function.
-  String x = "";
-  x += ( val < 0 ) ? "1" : "0";
-  val = abs ( val );
-  int tmp = val;
-  x += String ( tmp, HEX );
-  tmp = ( val * 100 ) % 100;
-  x += String ( tmp, HEX );
-  data += x;
+  /* SIGN */
+  data += ( val < 0 ) ? "1" : "0";
+  val = fabs ( val );
+
+  /* WHOLE PART */
+  uint16_t tmp     = (uint16_t) val; // tmp is the whole part
+  String   tmp_str = String ( tmp, HEX );
+  leftPad ( 3, '0', tmp_str );
+  data += tmp_str;
+
+  /* DECIMALS */
+  tmp = (uint16_t) ( 100 * ( val - tmp ) ); // tmp is the decimal part (up to two dp)
+  tmp_str = String ( tmp, HEX );
+  leftPad ( 2, '0', tmp_str );
+  data += tmp_str;
   /*********** TODO END *************/
 }
 
 /**
- * Reads a value from the light sensor in the range 0-100.
- * 0  <-> very dark
- * 100 <-> very bright
- * 
- */
+   Reads a value from the light sensor in the range 0-100.
+   0  <-> very dark
+   100 <-> very bright
+
+*/
 void readLight(AppDataOut & out) {
   out.light = 50;
 }
 
 /**
- * Reads a value from the temperature sensor in the range (-273.15)-(999.99).
- * 
- */
+   Reads a value from the temperature sensor in the range (-273.15)-(999.99).
+
+*/
 void readTemp(AppDataOut & out) {
   out.temp = 21.34f;
 }
