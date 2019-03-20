@@ -23,14 +23,14 @@ const uint8_t socket = SOCKET1;
 /*********** TODO BEGIN ***********/
 // Define device parameters for Back-End registration for ABP and OTAA
 #ifdef ABP
-char DEVICE_EUI[]  = "5EC0ABB010203062";
-char DEVICE_ADDR[] = "5EC0ABB2";
-char NWK_SESSION_KEY[] = "FBCE87F3FDDEB6BA78840BBF63159B3F";
-char APP_SESSION_KEY[] = "8637540C05C929028D1E46729AFC4089";
+char DEVICE_EUI[]  = "................";
+char DEVICE_ADDR[] = "........";
+char NWK_SESSION_KEY[] = "................................";
+char APP_SESSION_KEY[] = "................................";
 #else //OTAA
-char DEVICE_EUI[]  = "5EC07AA010203062";
-char APP_EUI[] = "5EC0DE00ABB05EC0";
-char APP_KEY[] = "FAD9F89BA660633B7A3EDBDC151DADE7";
+char DEVICE_EUI[]  = "................";
+char APP_EUI[] = "................";
+char APP_KEY[] = "................................";
 #endif //ABP
 /*********** TODO END *************/
 
